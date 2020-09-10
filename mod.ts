@@ -7,7 +7,10 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
       cb: (...args: E[K]) => void;
     }>;
   } = Object.create(null);
-  #writer: WritableStreamDefaultWriter<[keyof E, E[keyof E]]>[] = [];
+  #writer: WritableStreamDefaultWriter<{
+    name: keyof E;
+    value: E[keyof E];
+  }>[] = [];
   #onWriters: {
     [K in keyof E]?: WritableStreamDefaultWriter<E[K]>[];
   } = Object.create(null);
@@ -89,7 +92,10 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
     }
 
     for (const writer of this.#writer) {
-      writer.write([eventName, args]);
+      writer.write({
+        name: eventName,
+        value: args,
+      });
     }
     if (this.#onWriters[eventName]) {
       for (const writer of this.#onWriters[eventName]!) {
@@ -98,10 +104,20 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
     }
   }
 
-  async* [Symbol.asyncIterator](): AsyncIterableIterator<{ [K in keyof E]: [K, E[K]] }[keyof E]> {
-    const {readable, writable} = new TransformStream<[keyof E, E[keyof E]],
-      [keyof E, E[keyof E]]>();
+  async* [Symbol.asyncIterator](): AsyncIterableIterator<{
+    [K in keyof E]: {
+      name: K;
+      value: E[K];
+    };
+  }[keyof E]> {
+    const {readable, writable} = new TransformStream<{
+      name: keyof E;
+      value: E[keyof E];
+    }, {
+      name: keyof E;
+      value: E[keyof E];
+    }>();
     this.#writer.push(writable.getWriter());
-    yield* readable.getIterator();
+    yield * readable.getIterator();
   }
 }
