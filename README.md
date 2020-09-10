@@ -5,21 +5,50 @@
 [![Dependencies](https://img.shields.io/github/workflow/status/denosaurs/event/depsbot?label=dependencies)](https://github.com/denosaurs/depsbot)
 [![License](https://img.shields.io/github/license/denosaurs/event)](https://github.com/denosaurs/event/blob/master/LICENSE)
 
----
+A strictly typed event emitter with asyncIterator support.
 
-> ⚠️ Work in progress. Expect breaking changes.
+Events should be defined as a literal object type where the key is the event name, and the value is a tuple with any amount of elements of any type. 
+> caveat: events must be a type, and can't be an interface due to their design differences.
 
----
+```ts
+type Events = {
+  foo: [string];
+  bar: [number, boolean];
+};
+
+class MyClass extends EventEmitter<Events>{}
+const MyClassInstance = new MyClass();
+
+function listener(num, bool) {}
+
+// add listener to the bar event
+MyClassInstance.on("bar", listener);
+
+// remove a listener from the bar event
+MyClassInstance.off("bar", listener);
+
+// add a one-time listener to the bar event
+MyClassInstance.once("bar", (num, bool) => {});
+
+// emit the bar event with the wanted data
+MyClassInstance.emit("bar", 42, true);
+
+// listen to all events with an async iterator
+for await (const event of MyClassInstance) {
+  if (event.name === "bar") {
+    // event.value is of type [number, boolean]
+  }
+}
+
+// listen to a specific event with an async iterator
+for await (const [num, bool] of MyClassInstance.asyncOn("bar")) {}
+```
 
 ## Maintainers
 
 - crowlKats ([@crowlKats](https://github.com/crowlKats))
 
 ## Other
-
-### Related
-
-- [link] - description
 
 ### Contribution
 
