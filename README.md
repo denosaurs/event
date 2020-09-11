@@ -5,10 +5,13 @@
 [![Dependencies](https://img.shields.io/github/workflow/status/denosaurs/event/depsbot?label=dependencies)](https://github.com/denosaurs/depsbot)
 [![License](https://img.shields.io/github/license/denosaurs/event)](https://github.com/denosaurs/event/blob/master/LICENSE)
 
-A strictly typed event emitter with asyncIterator support.
+Strictly typed event emitter with asynciterator support.
 
-Events should be defined as a literal object type where the key is the event name, and the value is a tuple with any amount of elements of any type. 
-> caveat: events must be a type, and can't be an interface due to their design differences.
+Events should be defined as a literal object type where the key is the event name, and the value is a tuple with any amount of elements of any type.
+
+---
+> ⚠️ Events must be a type, and can't be an interface due to their design differences.
+---
 
 ```ts
 type Events = {
@@ -16,7 +19,7 @@ type Events = {
   bar: [number, boolean];
 };
 
-class MyClass extends EventEmitter<Events>{}
+class MyClass extends EventEmitter<Events> {}
 const MyClassInstance = new MyClass();
 
 function listener(num, bool) {}
@@ -41,7 +44,8 @@ for await (const event of MyClassInstance) {
 }
 
 // listen to a specific event with an async iterator
-for await (const [num, bool] of MyClassInstance.asyncOn("bar")) {}
+for await (const [num, bool] of MyClassInstance.asyncOn("bar")) {
+}
 ```
 
 ## Maintainers

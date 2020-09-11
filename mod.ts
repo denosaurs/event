@@ -118,13 +118,16 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
       };
     }[keyof E]
   > {
-    const { readable, writable } = new TransformStream<{
-      name: keyof E;
-      value: E[keyof E];
-    }, {
-      name: keyof E;
-      value: E[keyof E];
-    }>();
+    const { readable, writable } = new TransformStream<
+      {
+        name: keyof E;
+        value: E[keyof E];
+      },
+      {
+        name: keyof E;
+        value: E[keyof E];
+      }
+    >();
     this.#writer.push(writable.getWriter());
     yield* readable.getIterator();
   }
