@@ -47,7 +47,10 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
    * Adds a one-time listener function for the event named eventName. The next
    * time eventName is emitted, listener is called and then removed.
    */
-  once<K extends keyof E>(eventName: K, listener: (...args: E[K]) => void) {
+  once<K extends keyof E>(
+    eventName: K,
+    listener: (...args: E[K]) => void,
+  ): void {
     if (!this.listeners[eventName]) {
       this.listeners[eventName] = [];
     }
@@ -62,7 +65,10 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
    * If no listener is passed, all listeners will be removed from eventName.
    * If no eventName is passed, all listeners will be removed from the EventEmitter.
    */
-  off<K extends keyof E>(eventName?: K, listener?: (...args: E[K]) => void) {
+  off<K extends keyof E>(
+    eventName?: K,
+    listener?: (...args: E[K]) => void,
+  ): void {
     if (eventName) {
       if (listener) {
         this.listeners[eventName] = this.listeners[eventName]?.filter(
@@ -81,7 +87,7 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
    * eventName, in the order they were registered, passing the supplied
    * arguments to each.
    */
-  emit<K extends keyof E>(eventName: K, ...args: E[K]) {
+  emit<K extends keyof E>(eventName: K, ...args: E[K]): void {
     const listeners = this.listeners[eventName]?.slice() ?? [];
     for (const { cb, once } of listeners) {
       cb(...args);
