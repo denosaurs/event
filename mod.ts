@@ -33,12 +33,12 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
   /**
    * Returns an asyncIterator which will fire every time eventName is emitted.
    */
-  async* asyncOn<K extends keyof E>(eventName: K): AsyncIterableIterator<E[K]> {
+  async *asyncOn<K extends keyof E>(eventName: K): AsyncIterableIterator<E[K]> {
     if (!this.#onWriters[eventName]) {
       this.#onWriters[eventName] = [];
     }
 
-    const {readable, writable} = new TransformStream<E[K], E[K]>();
+    const { readable, writable } = new TransformStream<E[K], E[K]>();
     this.#onWriters[eventName]!.push(writable.getWriter());
     yield* readable.getIterator();
   }
@@ -66,7 +66,7 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
     if (eventName) {
       if (listener) {
         this.listeners[eventName] = this.listeners[eventName]?.filter(
-          ({cb}) => cb !== listener,
+          ({ cb }) => cb !== listener,
         );
       } else {
         delete this.listeners[eventName];
@@ -83,7 +83,7 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
    */
   emit<K extends keyof E>(eventName: K, ...args: E[K]) {
     const listeners = this.listeners[eventName]?.slice() ?? [];
-    for (const {cb, once} of listeners) {
+    for (const { cb, once } of listeners) {
       cb(...args);
 
       if (once) {
@@ -104,13 +104,15 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
     }
   }
 
-  async* [Symbol.asyncIterator](): AsyncIterableIterator<{
-    [K in keyof E]: {
-      name: K;
-      value: E[K];
-    };
-  }[keyof E]> {
-    const {readable, writable} = new TransformStream<{
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<
+    {
+      [K in keyof E]: {
+        name: K;
+        value: E[K];
+      };
+    }[keyof E]
+  > {
+    const { readable, writable } = new TransformStream<{
       name: keyof E;
       value: E[keyof E];
     }, {
@@ -118,6 +120,6 @@ export default class EventEmitter<E extends Record<string, unknown[]>> {
       value: E[keyof E];
     }>();
     this.#writer.push(writable.getWriter());
-    yield * readable.getIterator();
+    yield* readable.getIterator();
   }
 }
