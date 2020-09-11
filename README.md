@@ -21,7 +21,7 @@ const MyClassInstance = new MyClass();
 
 function listener(num, bool) {}
 
-// add listener to the bar event
+// add a listener to the bar event
 MyClassInstance.on("bar", listener);
 
 // remove a listener from the bar event
