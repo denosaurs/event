@@ -1,7 +1,7 @@
 import {
   assertEquals,
   fail,
-} from "https://deno.land/std@0.68.0/testing/asserts.ts";
+} from "https://deno.land/std@0.76.0/testing/asserts.ts";
 import EventEmitter from "./mod.ts";
 
 type Events = {
