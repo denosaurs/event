@@ -20,7 +20,10 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
    * No checks are made if the listener was already added, so adding multiple
    * listeners will result in the listener being called multiple times.
    */
-  on<K extends keyof E>(eventName: K, listener: (...args: E[K]) => void): void {
+  on<K extends keyof E>(
+    eventName: K,
+    listener: (...args: E[K]) => void,
+  ): EventEmitter<E> {
     if (!this.listeners[eventName]) {
       this.listeners[eventName] = [];
     }
@@ -28,17 +31,18 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       once: false,
       cb: listener,
     });
+    return this;
   }
 
   /**
    * Returns an asyncIterator which will fire every time eventName is emitted.
    */
-  async* asyncOn<K extends keyof E>(eventName: K): AsyncIterableIterator<E[K]> {
+  async *asyncOn<K extends keyof E>(eventName: K): AsyncIterableIterator<E[K]> {
     if (!this.#onWriters[eventName]) {
       this.#onWriters[eventName] = [];
     }
 
-    const {readable, writable} = new TransformStream<E[K], E[K]>();
+    const { readable, writable } = new TransformStream<E[K], E[K]>();
     this.#onWriters[eventName]!.push(writable.getWriter());
     yield* readable.getIterator();
   }
@@ -50,7 +54,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   once<K extends keyof E>(
     eventName: K,
     listener: (...args: E[K]) => void,
-  ): void {
+  ): EventEmitter<E> {
     if (!this.listeners[eventName]) {
       this.listeners[eventName] = [];
     }
@@ -58,6 +62,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       once: true,
       cb: listener,
     });
+    return this;
   }
 
   /**
@@ -68,11 +73,11 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   off<K extends keyof E>(
     eventName?: K,
     listener?: (...args: E[K]) => void,
-  ): void {
+  ): EventEmitter<E> {
     if (eventName) {
       if (listener) {
         this.listeners[eventName] = this.listeners[eventName]?.filter(
-          ({cb}) => cb !== listener,
+          ({ cb }) => cb !== listener,
         );
       } else {
         delete this.listeners[eventName];
@@ -80,6 +85,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
     } else {
       this.listeners = Object.create(null);
     }
+    return this;
   }
 
   /**
@@ -89,7 +95,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
    */
   async emit<K extends keyof E>(eventName: K, ...args: E[K]): Promise<void> {
     const listeners = this.listeners[eventName]?.slice() ?? [];
-    for (const {cb, once} of listeners) {
+    for (const { cb, once } of listeners) {
       cb(...args);
 
       if (once) {
@@ -110,13 +116,15 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
     }
   }
 
-  async* [Symbol.asyncIterator](): AsyncIterableIterator<{
-    [K in keyof E]: {
-      name: K;
-      value: E[K];
-    };
-  }[keyof E]> {
-    const {readable, writable} = new TransformStream<{
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<
+    {
+      [K in keyof E]: {
+        name: K;
+        value: E[K];
+      };
+    }[keyof E]
+  > {
+    const { readable, writable } = new TransformStream<{
       name: keyof E;
       value: E[keyof E];
     }, {
@@ -124,6 +132,6 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       value: E[keyof E];
     }>();
     this.#writer.push(writable.getWriter());
-    yield * readable.getIterator();
+    yield* readable.getIterator();
   }
 }

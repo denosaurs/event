@@ -1,7 +1,7 @@
 import {
   assertEquals,
   fail,
-} from "https://deno.land/std@0.76.0/testing/asserts.ts";
+} from "https://deno.land/std@0.79.0/testing/asserts.ts";
 import { EventEmitter } from "./mod.ts";
 
 type Events = {
@@ -37,6 +37,18 @@ Deno.test("off", () => {
 
   ee.on("foo", foo);
   ee.off("foo", foo);
+
+  ee.emit("foo", "bar");
+});
+
+Deno.test("chainable", () => {
+  const ee = new EventEmitter<Events>();
+
+  function foo() {
+    fail();
+  }
+
+  ee.on("foo", foo).off("foo", foo);
 
   ee.emit("foo", "bar");
 });
