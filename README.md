@@ -33,6 +33,9 @@ MyClassInstance.off("bar", listener);
 // add a one-time listener to the bar event
 MyClassInstance.once("bar", (num, bool) => {});
 
+// on, once, and off are chainable
+MyClassInstance.on("bar", listener).off("bar", listener);
+
 // emit the bar event with the wanted data
 MyClassInstance.emit("bar", 42, true);
 
