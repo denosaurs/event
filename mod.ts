@@ -23,7 +23,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   on<K extends keyof E>(
     eventName: K,
     listener: (...args: E[K]) => void,
-  ): EventEmitter<E> {
+  ): this {
     if (!this.listeners[eventName]) {
       this.listeners[eventName] = [];
     }
@@ -42,7 +42,10 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       this.#onWriters[eventName] = [];
     }
 
-    const { readable, writable } = new TransformStream<E[K], E[K]>();
+    const {
+      readable,
+      writable,
+    } = new TransformStream<E[K], E[K]>();
     this.#onWriters[eventName]!.push(writable.getWriter());
     yield* readable.getIterator();
   }
@@ -54,7 +57,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   once<K extends keyof E>(
     eventName: K,
     listener: (...args: E[K]) => void,
-  ): EventEmitter<E> {
+  ): this {
     if (!this.listeners[eventName]) {
       this.listeners[eventName] = [];
     }
@@ -73,7 +76,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   off<K extends keyof E>(
     eventName?: K,
     listener?: (...args: E[K]) => void,
-  ): EventEmitter<E> {
+  ): this {
     if (eventName) {
       if (listener) {
         this.listeners[eventName] = this.listeners[eventName]?.filter(
@@ -95,7 +98,12 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
    */
   async emit<K extends keyof E>(eventName: K, ...args: E[K]): Promise<void> {
     const listeners = this.listeners[eventName]?.slice() ?? [];
-    for (const { cb, once } of listeners) {
+    for (
+      const {
+        cb,
+        once,
+      } of listeners
+    ) {
       cb(...args);
 
       if (once) {
@@ -124,7 +132,10 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       };
     }[keyof E]
   > {
-    const { readable, writable } = new TransformStream<{
+    const {
+      readable,
+      writable,
+    } = new TransformStream<{
       name: keyof E;
       value: E[keyof E];
     }, {
