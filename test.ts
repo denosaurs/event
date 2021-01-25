@@ -93,12 +93,12 @@ Deno.test("asyncIterator", async () => {
   assertEquals(event.value, ["bar"]);
 });
 
-Deno.test("asyncOn", async () => {
+Deno.test("on AsyncIterator", async () => {
   const ee = new EventEmitter<Events>();
   setTimeout(() => {
     ee.emit("foo", "bar");
   }, 100);
-  const value = (await ee.asyncOn("foo").next()).value;
+  const value = (await ee.on("foo").next()).value;
 
   assertEquals(value, ["bar"]);
 });
@@ -109,7 +109,7 @@ Deno.test("closeEvent", async () => {
     ee.emit("foo", "bar");
   }, 100);
 
-  for await (const _ of ee.asyncOn("foo")) {
+  for await (const _ of ee.on("foo")) {
     await ee.close("foo");
   }
 });

@@ -51,7 +51,7 @@ for await (const event of MyClassInstance) {
 }
 
 // listen to a specific event with an async iterator
-for await (const [num, bool] of MyClassInstance.asyncOn("bar")) {
+for await (const [num, bool] of MyClassInstance.on("bar")) {
 }
 
 // removes all listeners and closes async iterators
