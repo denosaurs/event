@@ -7,10 +7,14 @@
 
 Strictly typed event emitter with asynciterator support.
 
-Events should be defined as a literal object type where the key is the event name, and the value is a tuple with any amount of elements of any type.
+Events should be defined as a literal object type where the key is the event
+name, and the value is a tuple with any amount of elements of any type.
 
 ---
-> ⚠️ Events must be a type, and can't be an interface due to their design differences.
+
+> ⚠️ Events must be a type, and can't be an interface due to their design
+> differences.
+
 ---
 
 ```ts
@@ -49,6 +53,9 @@ for await (const event of MyClassInstance) {
 // listen to a specific event with an async iterator
 for await (const [num, bool] of MyClassInstance.asyncOn("bar")) {
 }
+
+// removes all listeners and closes async iterators
+MyClassInstance.close("bar");
 ```
 
 ## Maintainers
@@ -59,7 +66,8 @@ for await (const [num, bool] of MyClassInstance.asyncOn("bar")) {
 
 ### Contribution
 
-Pull request, issues and feedback are very welcome. Code style is formatted with `deno fmt` and commit messages are done following Conventional Commits spec.
+Pull request, issues and feedback are very welcome. Code style is formatted with
+`deno fmt` and commit messages are done following Conventional Commits spec.
 
 ### Licence
 

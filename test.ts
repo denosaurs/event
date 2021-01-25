@@ -73,3 +73,14 @@ Deno.test("asyncOn", async () => {
 
   assertEquals(value, ["bar"]);
 });
+
+Deno.test("close", async () => {
+  const ee = new EventEmitter<Events>();
+  setTimeout(() => {
+    ee.emit("foo", "bar");
+  }, 100);
+
+  for await (const _ of ee.asyncOn("foo")) {
+    await ee.close("foo");
+  }
+});

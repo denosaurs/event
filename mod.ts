@@ -7,7 +7,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       cb: (...args: E[K]) => void;
     }>;
   } = Object.create(null);
-  #writer: WritableStreamDefaultWriter<{
+  #globalWriters: WritableStreamDefaultWriter<{
     name: keyof E;
     value: E[keyof E];
   }>[] = [];
@@ -111,7 +111,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       }
     }
 
-    for (const writer of this.#writer) {
+    for (const writer of this.#globalWriters) {
       await writer.write({
         name: eventName,
         value: args,
@@ -121,6 +121,40 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       for (const writer of this.#onWriters[eventName]!) {
         await writer.write(args);
       }
+    }
+  }
+
+  /**
+   * Closes async iterators, allowing them to finish and removes listeners.
+   * If no eventName is specified, all iterators will be closed,
+   * including the iterator for the class.
+   */
+  async close<K extends keyof E>(eventName?: K): Promise<void> {
+    this.off(eventName);
+
+    if (eventName) {
+      if (this.#onWriters[eventName]) {
+        for (const writer of this.#onWriters[eventName]!) {
+          await writer.close();
+        }
+        delete this.#onWriters[eventName];
+      }
+    } else {
+      for (
+        const writers of Object.values(
+          this.#onWriters,
+        ) as WritableStreamDefaultWriter<E[K]>[][]
+      ) {
+        for (const writer of writers) {
+          await writer.close();
+        }
+      }
+      this.#onWriters = Object.create(null);
+
+      for (const writer of this.#globalWriters) {
+        await writer.close();
+      }
+      this.#globalWriters = [];
     }
   }
 
@@ -142,7 +176,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       name: keyof E;
       value: E[keyof E];
     }>();
-    this.#writer.push(writable.getWriter());
+    this.#globalWriters.push(writable.getWriter());
     yield* readable[Symbol.asyncIterator]();
   }
 }
