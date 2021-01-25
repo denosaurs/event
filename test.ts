@@ -6,6 +6,7 @@ import { EventEmitter } from "./mod.ts";
 
 type Events = {
   foo: [string];
+  bar: [number];
 };
 
 Deno.test("on", () => {
@@ -41,6 +42,34 @@ Deno.test("off", () => {
   ee.emit("foo", "bar");
 });
 
+Deno.test("offEvent", () => {
+  const ee = new EventEmitter<Events>();
+
+  let i = 0;
+
+  ee.on("foo", () => i++);
+  ee.on("foo", () => i++);
+  ee.off();
+
+  ee.emit("foo", "bar");
+
+  assertEquals(i, 0);
+});
+
+Deno.test("offAll", () => {
+  const ee = new EventEmitter<Events>();
+
+  let i = 0;
+
+  ee.on("foo", () => i++);
+  ee.on("bar", () => i++);
+  ee.off();
+
+  ee.emit("foo", "bar");
+
+  assertEquals(i, 0);
+});
+
 Deno.test("chainable", () => {
   const ee = new EventEmitter<Events>();
 
@@ -74,7 +103,7 @@ Deno.test("asyncOn", async () => {
   assertEquals(value, ["bar"]);
 });
 
-Deno.test("close", async () => {
+Deno.test("closeEvent", async () => {
   const ee = new EventEmitter<Events>();
   setTimeout(() => {
     ee.emit("foo", "bar");
@@ -82,5 +111,16 @@ Deno.test("close", async () => {
 
   for await (const _ of ee.asyncOn("foo")) {
     await ee.close("foo");
+  }
+});
+
+Deno.test("closeGlobal", async () => {
+  const ee = new EventEmitter<Events>();
+  setTimeout(() => {
+    ee.emit("foo", "bar");
+  }, 100);
+
+  for await (const _ of ee) {
+    await ee.close();
   }
 });

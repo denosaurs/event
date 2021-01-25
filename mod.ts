@@ -37,7 +37,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   /**
    * Returns an asyncIterator which will fire every time eventName is emitted.
    */
-  async *asyncOn<K extends keyof E>(eventName: K): AsyncIterableIterator<E[K]> {
+  asyncOn<K extends keyof E>(eventName: K): AsyncIterableIterator<E[K]> {
     if (!this.#onWriters[eventName]) {
       this.#onWriters[eventName] = [];
     }
@@ -47,7 +47,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       writable,
     } = new TransformStream<E[K], E[K]>();
     this.#onWriters[eventName]!.push(writable.getWriter());
-    yield* readable[Symbol.asyncIterator]();
+    return readable[Symbol.asyncIterator]();
   }
 
   /**
@@ -158,7 +158,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
     }
   }
 
-  async *[Symbol.asyncIterator](): AsyncIterableIterator<
+  [Symbol.asyncIterator](): AsyncIterableIterator<
     {
       [K in keyof E]: {
         name: K;
@@ -177,6 +177,6 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       value: E[keyof E];
     }>();
     this.#globalWriters.push(writable.getWriter());
-    yield* readable[Symbol.asyncIterator]();
+    return readable[Symbol.asyncIterator]();
   }
 }
