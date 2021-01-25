@@ -47,7 +47,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       writable,
     } = new TransformStream<E[K], E[K]>();
     this.#onWriters[eventName]!.push(writable.getWriter());
-    yield* readable.getIterator();
+    yield* readable[Symbol.asyncIterator]();
   }
 
   /**
@@ -143,6 +143,6 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       value: E[keyof E];
     }>();
     this.#writer.push(writable.getWriter());
-    yield* readable.getIterator();
+    yield* readable[Symbol.asyncIterator]();
   }
 }
