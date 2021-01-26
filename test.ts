@@ -109,9 +109,19 @@ Deno.test("closeEvent", async () => {
     ee.emit("foo", "bar");
   }, 100);
 
+  let i = 0;
+
+  (async () => {
+    for await (const _ of ee.on("foo")) {
+    }
+    i++;
+  })();
+
   for await (const _ of ee.on("foo")) {
     await ee.close("foo");
   }
+
+  assertEquals(i, 1);
 });
 
 Deno.test("closeGlobal", async () => {
@@ -120,7 +130,40 @@ Deno.test("closeGlobal", async () => {
     ee.emit("foo", "bar");
   }, 100);
 
+  let i = 0;
+
+  (async () => {
+    for await (const _ of ee) {
+    }
+    i++;
+  })();
+
   for await (const _ of ee) {
     await ee.close();
   }
+
+  assertEquals(i, 1);
+});
+
+Deno.test("closeMixed", async () => {
+  const ee = new EventEmitter<Events>();
+  setTimeout(() => {
+    ee.emit("foo", "bar");
+  }, 100);
+
+  (async () => {
+    console.log(1);
+    for await (const _ of ee.on("foo")) {
+      console.log(2);
+    }
+    console.log(3);
+  })();
+
+  console.log(4);
+  for await (const x of ee) {
+    console.log(5);
+    await ee.close();
+    console.log(6);
+  }
+  console.log(7);
 });

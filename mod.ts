@@ -1,6 +1,6 @@
 // Copyright 2020-present the denosaurs team. All rights reserved. MIT license.
 
-type entry<E, K extends keyof E> = {
+type Entry<E, K extends keyof E> = {
   name: K;
   value: E[K];
 };
@@ -12,7 +12,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       cb: (...args: E[K]) => void;
     }>;
   } = {};
-  #globalWriters: WritableStreamDefaultWriter<entry<E, keyof E>>[] = [];
+  #globalWriters: WritableStreamDefaultWriter<Entry<E, keyof E>>[] = [];
   #onWriters: {
     [K in keyof E]?: WritableStreamDefaultWriter<E[K]>[];
   } = {};
@@ -106,16 +106,16 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       }
     }
 
+    if (this.#onWriters[eventName]) {
+      for (const writer of this.#onWriters[eventName]!) {
+        await writer.write(args);
+      }
+    }
     for (const writer of this.#globalWriters) {
       await writer.write({
         name: eventName,
         value: args,
       });
-    }
-    if (this.#onWriters[eventName]) {
-      for (const writer of this.#onWriters[eventName]!) {
-        await writer.write(args);
-      }
     }
   }
 
@@ -154,11 +154,11 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   }
 
   [Symbol.asyncIterator]<K extends keyof E>(): AsyncIterableIterator<
-    { [V in K]: entry<E, V> }[K]
+    { [V in K]: Entry<E, V> }[K]
   > {
     const { readable, writable } = new TransformStream<
-      entry<E, K>,
-      entry<E, K>
+      Entry<E, K>,
+      Entry<E, K>
     >();
     this.#globalWriters.push(writable.getWriter());
     return readable[Symbol.asyncIterator]();
