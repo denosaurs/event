@@ -113,6 +113,7 @@ Deno.test("closeEvent", async () => {
 
   (async () => {
     for await (const _ of ee.on("foo")) {
+      //
     }
     i++;
   })();
@@ -134,6 +135,7 @@ Deno.test("closeGlobal", async () => {
 
   (async () => {
     for await (const _ of ee) {
+      //
     }
     i++;
   })();
@@ -152,18 +154,12 @@ Deno.test("closeMixed", async () => {
   }, 100);
 
   (async () => {
-    console.log(1);
     for await (const _ of ee.on("foo")) {
-      console.log(2);
+      //
     }
-    console.log(3);
   })();
 
-  console.log(4);
   for await (const x of ee) {
-    console.log(5);
     await ee.close();
-    console.log(6);
   }
-  console.log(7);
 });
