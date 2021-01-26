@@ -6,7 +6,7 @@ type Entry<E, K extends keyof E> = {
 };
 
 export class EventEmitter<E extends Record<string, unknown[]>> {
-  listeners: {
+  #listeners: {
     [K in keyof E]?: Array<{
       once: boolean;
       cb: (...args: E[K]) => void;
@@ -31,10 +31,10 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
     listener?: (...args: E[K]) => void,
   ): this | AsyncIterableIterator<E[K]> {
     if (listener) {
-      if (!this.listeners[eventName]) {
-        this.listeners[eventName] = [];
+      if (!this.#listeners[eventName]) {
+        this.#listeners[eventName] = [];
       }
-      this.listeners[eventName]!.push({
+      this.#listeners[eventName]!.push({
         once: false,
         cb: listener,
       });
@@ -58,10 +58,10 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
     eventName: K,
     listener: (...args: E[K]) => void,
   ): this {
-    if (!this.listeners[eventName]) {
-      this.listeners[eventName] = [];
+    if (!this.#listeners[eventName]) {
+      this.#listeners[eventName] = [];
     }
-    this.listeners[eventName]!.push({
+    this.#listeners[eventName]!.push({
       once: true,
       cb: listener,
     });
@@ -79,14 +79,14 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   ): this {
     if (eventName) {
       if (listener) {
-        this.listeners[eventName] = this.listeners[eventName]?.filter(
+        this.#listeners[eventName] = this.#listeners[eventName]?.filter(
           ({ cb }) => cb !== listener,
         );
       } else {
-        delete this.listeners[eventName];
+        delete this.#listeners[eventName];
       }
     } else {
-      this.listeners = {};
+      this.#listeners = {};
     }
     return this;
   }
@@ -97,7 +97,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
    * arguments to each.
    */
   async emit<K extends keyof E>(eventName: K, ...args: E[K]): Promise<void> {
-    const listeners = this.listeners[eventName]?.slice() ?? [];
+    const listeners = this.#listeners[eventName]?.slice() ?? [];
     for (const { cb, once } of listeners) {
       cb(...args);
 
