@@ -1,7 +1,8 @@
 import {
   assertEquals,
+  assertThrows,
   fail,
-} from "https://deno.land/std@0.79.0/testing/asserts.ts";
+} from "https://deno.land/std@0.90.0/testing/asserts.ts";
 import { EventEmitter } from "./mod.ts";
 
 type Events = {
@@ -162,4 +163,11 @@ Deno.test("closeMixed", async () => {
   for await (const x of ee) {
     await ee.close();
   }
+});
+
+Deno.test("limitReached", async () => {
+  const ee = new EventEmitter<Events>(1);
+
+  ee.on("foo", () => {});
+  assertThrows(() => ee.on("foo", () => {}));
 });

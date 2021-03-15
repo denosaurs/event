@@ -10,6 +10,10 @@ Strictly typed event emitter with asynciterator support.
 Events should be defined as a literal object type where the key is the event
 name, and the value is a tuple with any amount of elements of any type.
 
+The constructor takes an optional argument which defines the maximum amount of
+listeners per event, which defaults to 10. If this limit is surpassed, an error
+is thrown.
+
 ---
 
 > ⚠️ Events must be a type, and can't be an interface due to their design
@@ -33,6 +37,12 @@ MyClassInstance.on("bar", listener);
 
 // remove a listener from the bar event
 MyClassInstance.off("bar", listener);
+
+// remove all listeners from the bar event
+MyClassInstance.off("bar");
+
+// remove all listeners from the event emitter
+MyClassInstance.off();
 
 // add a one-time listener to the bar event
 MyClassInstance.once("bar", (num, bool) => {});

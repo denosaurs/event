@@ -16,6 +16,14 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   #onWriters: {
     [K in keyof E]?: WritableStreamDefaultWriter<E[K]>[];
   } = {};
+  #limit: number;
+
+  /**
+   * @param maxListenersPerEvent - if set to 0, no limit is applied. defaults to 10
+   */
+  constructor(maxListenersPerEvent?: number) {
+    this.#limit = maxListenersPerEvent ?? 10;
+  }
 
   /**
    * Appends the listener to the listeners array of the corresponding eventName.
@@ -34,6 +42,11 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       if (!this.#listeners[eventName]) {
         this.#listeners[eventName] = [];
       }
+      if (
+        this.#limit !== 0 && this.#listeners[eventName]!.length >= this.#limit
+      ) {
+        throw new TypeError("Listeners limit reached: limit is " + this.#limit);
+      }
       this.#listeners[eventName]!.push({
         once: false,
         cb: listener,
@@ -42,6 +55,11 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
     } else {
       if (!this.#onWriters[eventName]) {
         this.#onWriters[eventName] = [];
+      }
+      if (
+        this.#limit !== 0 && this.#onWriters[eventName]!.length >= this.#limit
+      ) {
+        throw new TypeError("Listeners limit reached: limit is " + this.#limit);
       }
 
       const { readable, writable } = new TransformStream<E[K], E[K]>();
@@ -60,6 +78,11 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   ): this {
     if (!this.#listeners[eventName]) {
       this.#listeners[eventName] = [];
+    }
+    if (
+      this.#limit !== 0 && this.#listeners[eventName]!.length >= this.#limit
+    ) {
+      throw new TypeError("Listeners limit reached: limit is " + this.#limit);
     }
     this.#listeners[eventName]!.push({
       once: true,
@@ -156,6 +179,10 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   [Symbol.asyncIterator]<K extends keyof E>(): AsyncIterableIterator<
     { [V in K]: Entry<E, V> }[K]
   > {
+    if (this.#limit !== 0 && this.#globalWriters.length >= this.#limit) {
+      throw new TypeError("Listeners limit reached: limit is " + this.#limit);
+    }
+
     const { readable, writable } = new TransformStream<
       Entry<E, K>,
       Entry<E, K>
