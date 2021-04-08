@@ -165,7 +165,7 @@ Deno.test("closeMixed", async () => {
   }
 });
 
-Deno.test("limitReached", async () => {
+Deno.test("limitReached", () => {
   const ee = new EventEmitter<Events>(1);
 
   ee.on("foo", () => {});
