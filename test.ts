@@ -2,7 +2,7 @@ import {
   assertEquals,
   assertThrows,
   fail,
-} from "https://deno.land/std@0.90.0/testing/asserts.ts";
+} from "https://deno.land/std@0.92.0/testing/asserts.ts";
 import { EventEmitter } from "./mod.ts";
 
 type Events = {
