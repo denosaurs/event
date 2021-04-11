@@ -35,8 +35,6 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
    * listeners will result in the listener being called multiple times.
    * If no listener is passed, it returns an asyncIterator which will fire
    * every time eventName is emitted.
-   *
-   * { [V in K]: Entry<E, V> }[K]
    */
   on<K extends keyof E>(eventName: K, listener: (...args: E[K]) => void): this;
   on<K extends keyof E>(eventName: K): AsyncIterableIterator<E[K]>;
