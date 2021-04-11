@@ -12,6 +12,10 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       cb: (...args: E[K]) => void;
     }>;
   } = {};
+  #globalListeners: Array<{
+    once: boolean;
+    cb: <K extends keyof E>(name: K, value: E[K]) => void;
+  }> = [];
   #globalWriters: WritableStreamDefaultWriter<Entry<E, keyof E>>[] = [];
   #onWriters: {
     [K in keyof E]?: WritableStreamDefaultWriter<E[K]>[];
@@ -31,39 +35,57 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
    * listeners will result in the listener being called multiple times.
    * If no listener is passed, it returns an asyncIterator which will fire
    * every time eventName is emitted.
+   *
+   * { [V in K]: Entry<E, V> }[K]
    */
   on<K extends keyof E>(eventName: K, listener: (...args: E[K]) => void): this;
   on<K extends keyof E>(eventName: K): AsyncIterableIterator<E[K]>;
+  on<K extends keyof E>(listener: (name: K, value: E[K]) => void): this;
   on<K extends keyof E>(
-    eventName: K,
+    eventNameOrListener: K | ((name: K, value: E[K]) => void),
     listener?: (...args: E[K]) => void,
   ): this | AsyncIterableIterator<E[K]> {
-    if (listener) {
-      if (!this.#listeners[eventName]) {
-        this.#listeners[eventName] = [];
-      }
+    if (typeof eventNameOrListener === "function") {
       if (
-        this.#limit !== 0 && this.#listeners[eventName]!.length >= this.#limit
+        this.#limit !== 0 && this.#globalListeners.length >= this.#limit
       ) {
         throw new TypeError("Listeners limit reached: limit is " + this.#limit);
       }
-      this.#listeners[eventName]!.push({
+      this.#globalListeners.push({
+        once: false,
+        cb: eventNameOrListener,
+      });
+      return this;
+    }
+
+    if (listener) {
+      if (!this.#listeners[eventNameOrListener]) {
+        this.#listeners[eventNameOrListener] = [];
+      }
+      if (
+        this.#limit !== 0 &&
+        this.#listeners[eventNameOrListener]!.length >= this.#limit
+      ) {
+        throw new TypeError("Listeners limit reached: limit is " + this.#limit);
+      }
+      this.#listeners[eventNameOrListener]!.push({
         once: false,
         cb: listener,
       });
       return this;
     } else {
-      if (!this.#onWriters[eventName]) {
-        this.#onWriters[eventName] = [];
+      if (!this.#onWriters[eventNameOrListener]) {
+        this.#onWriters[eventNameOrListener] = [];
       }
       if (
-        this.#limit !== 0 && this.#onWriters[eventName]!.length >= this.#limit
+        this.#limit !== 0 &&
+        this.#onWriters[eventNameOrListener]!.length >= this.#limit
       ) {
         throw new TypeError("Listeners limit reached: limit is " + this.#limit);
       }
 
       const { readable, writable } = new TransformStream<E[K], E[K]>();
-      this.#onWriters[eventName]!.push(writable.getWriter());
+      this.#onWriters[eventNameOrListener]!.push(writable.getWriter());
       return readable[Symbol.asyncIterator]();
     }
   }
@@ -75,18 +97,37 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   once<K extends keyof E>(
     eventName: K,
     listener: (...args: E[K]) => void,
+  ): this;
+  once<K extends keyof E>(listener: (name: K, value: E[K]) => void): this;
+  once<K extends keyof E>(
+    eventNameOrListener: K | ((name: K, value: E[K]) => void),
+    listener?: (...args: E[K]) => void,
   ): this {
-    if (!this.#listeners[eventName]) {
-      this.#listeners[eventName] = [];
+    if (typeof eventNameOrListener === "function") {
+      if (
+        this.#limit !== 0 && this.#globalListeners.length >= this.#limit
+      ) {
+        throw new TypeError("Listeners limit reached: limit is " + this.#limit);
+      }
+      this.#globalListeners.push({
+        once: true,
+        cb: eventNameOrListener,
+      });
+      return this;
+    }
+
+    if (!this.#listeners[eventNameOrListener]) {
+      this.#listeners[eventNameOrListener] = [];
     }
     if (
-      this.#limit !== 0 && this.#listeners[eventName]!.length >= this.#limit
+      this.#limit !== 0 &&
+      this.#listeners[eventNameOrListener]!.length >= this.#limit
     ) {
       throw new TypeError("Listeners limit reached: limit is " + this.#limit);
     }
-    this.#listeners[eventName]!.push({
+    this.#listeners[eventNameOrListener]!.push({
       once: true,
-      cb: listener,
+      cb: listener!,
     });
     return this;
   }
@@ -99,17 +140,29 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   off<K extends keyof E>(
     eventName?: K,
     listener?: (...args: E[K]) => void,
+  ): this;
+  off<K extends keyof E>(listener: (name: K, value: E[K]) => void): this;
+  off<K extends keyof E>(
+    eventNameOrListener?: K | ((name: K, value: E[K]) => void),
+    listener?: (...args: E[K]) => void,
   ): this {
-    if (eventName) {
-      if (listener) {
-        this.#listeners[eventName] = this.#listeners[eventName]?.filter(
-          ({ cb }) => cb !== listener,
+    if (eventNameOrListener) {
+      if (typeof eventNameOrListener === "function") {
+        this.#globalListeners = this.#globalListeners?.filter(
+          ({ cb }) => cb !== eventNameOrListener,
         );
+        return this;
+      } else if (listener) {
+        this.#listeners[eventNameOrListener] = this
+          .#listeners[eventNameOrListener]?.filter(
+            ({ cb }) => cb !== listener,
+          );
       } else {
-        delete this.#listeners[eventName];
+        delete this.#listeners[eventNameOrListener];
       }
     } else {
       this.#listeners = {};
+      this.#globalListeners = [];
     }
     return this;
   }
@@ -121,12 +174,14 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
    */
   async emit<K extends keyof E>(eventName: K, ...args: E[K]): Promise<void> {
     const listeners = this.#listeners[eventName]?.slice() ?? [];
+    const globalListeners = this.#globalListeners.slice();
     for (const { cb, once } of listeners) {
       cb(...args);
-
-      if (once) {
-        this.off(eventName, cb);
-      }
+      if (once) this.off(eventName, cb);
+    }
+    for (const { cb, once } of globalListeners) {
+      cb(eventName, args);
+      if (once) this.off(cb);
     }
 
     if (this.#onWriters[eventName]) {

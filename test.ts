@@ -20,11 +20,37 @@ Deno.test("on", () => {
   ee.emit("foo", "bar");
 });
 
+Deno.test("on global", () => {
+  const ee = new EventEmitter<Events>();
+
+  ee.on((name, value) => {
+    assertEquals(name, "foo");
+    if (name === "foo") {
+      assertEquals(value[0], "bar");
+    }
+  });
+
+  ee.emit("foo", "bar");
+});
+
 Deno.test("once", () => {
   const ee = new EventEmitter<Events>();
 
   ee.once("foo", (string) => {
     assertEquals(string, "bar");
+  });
+
+  ee.emit("foo", "bar");
+});
+
+Deno.test("once global", () => {
+  const ee = new EventEmitter<Events>();
+
+  ee.once((name, value) => {
+    assertEquals(name, "foo");
+    if (name === "foo") {
+      assertEquals(value[0], "bar");
+    }
   });
 
   ee.emit("foo", "bar");
@@ -39,6 +65,19 @@ Deno.test("off", () => {
 
   ee.on("foo", foo);
   ee.off("foo", foo);
+
+  ee.emit("foo", "bar");
+});
+
+Deno.test("off global", () => {
+  const ee = new EventEmitter<Events>();
+
+  function foo() {
+    fail();
+  }
+
+  ee.on(foo);
+  ee.off(foo);
 
   ee.emit("foo", "bar");
 });
@@ -83,7 +122,7 @@ Deno.test("chainable", () => {
   ee.emit("foo", "bar");
 });
 
-Deno.test("asyncIterator", async () => {
+Deno.test("global asyncIterator", async () => {
   const ee = new EventEmitter<Events>();
   setTimeout(() => {
     ee.emit("foo", "bar");
