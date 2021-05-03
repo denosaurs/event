@@ -71,11 +71,18 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   /**
    * Adds a one-time listener function for the event named eventName.
    * The next time eventName is emitted, listener is called and then removed.
+   * If no listener is passed, it returns a Promise that will resolve once
+   * eventName is emitted.
    */
   once<K extends keyof E>(
     eventName: K,
     listener: (...args: E[K]) => void,
-  ): this {
+  ): this;
+  once<K extends keyof E>(eventName: K): Promise<E[K]>;
+  once<K extends keyof E>(
+    eventName: K,
+    listener?: (...args: E[K]) => void,
+  ): this | Promise<E[K]> {
     if (!this.#listeners[eventName]) {
       this.#listeners[eventName] = [];
     }
@@ -84,11 +91,20 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
     ) {
       throw new TypeError("Listeners limit reached: limit is " + this.#limit);
     }
-    this.#listeners[eventName]!.push({
-      once: true,
-      cb: listener,
-    });
-    return this;
+    if (listener) {
+      this.#listeners[eventName]!.push({
+        once: true,
+        cb: listener,
+      });
+      return this;
+    } else {
+      return new Promise((res) => {
+        this.#listeners[eventName]!.push({
+          once: true,
+          cb: (...args) => res(args),
+        });
+      });
+    }
   }
 
   /**

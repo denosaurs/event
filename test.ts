@@ -30,6 +30,17 @@ Deno.test("once", () => {
   ee.emit("foo", "bar");
 });
 
+Deno.test("async once", async () => {
+  const ee = new EventEmitter<Events>();
+
+  const once = ee.once("foo");
+
+  await ee.emit("foo", "bar");
+
+  const [val] = await once;
+  assertEquals(val, "bar");
+});
+
 Deno.test("off", () => {
   const ee = new EventEmitter<Events>();
 
