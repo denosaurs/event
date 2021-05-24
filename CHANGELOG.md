@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], and this project adheres to
 [Semantic Versioning].
 
+## [2.0.0] - 2021-05-24
+
+### Features
+
+- merge close into off ([`125dc6f`])
+
 ## [1.0.0] - 2021-04-08
 
 ### Features
@@ -44,6 +50,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
+[2.0.0]: https://github.com/denosaurs/event/compare/1.0.0...2.0.0
+[`125dc6f`]: https://github.com/denosaurs/event/commit/125dc6f3de085ecdad26d02a379e205495813359
 [1.0.0]: https://github.com/denosaurs/event/compare/0.2.1...1.0.0
 [`2113bc3`]: https://github.com/denosaurs/event/commit/2113bc3d3932a9d385fd361cc0ac207a44f5c9db
 [`51a9e71`]: https://github.com/denosaurs/event/commit/51a9e71392d409cead5566e965c534e5ed88c0df
