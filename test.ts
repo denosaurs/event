@@ -131,7 +131,7 @@ Deno.test("closeEvent", async () => {
   })();
 
   for await (const _ of ee.on("foo")) {
-    await ee.close("foo");
+    await ee.off("foo");
   }
 
   assertEquals(i, 1);
@@ -153,7 +153,7 @@ Deno.test("closeGlobal", async () => {
   })();
 
   for await (const _ of ee) {
-    await ee.close();
+    await ee.off();
   }
 
   assertEquals(i, 1);
@@ -172,7 +172,7 @@ Deno.test("closeMixed", async () => {
   })();
 
   for await (const x of ee) {
-    await ee.close();
+    await ee.off();
   }
 });
 

@@ -109,22 +109,47 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
 
   /**
    * Removes the listener from eventName.
-   * If no listener is passed, all listeners will be removed from eventName.
-   * If no eventName is passed, all listeners will be removed from the EventEmitter.
+   * If no listener is passed, all listeners will be removed from eventName,
+   * this includes async listeners.
+   * If no eventName is passed, all listeners will be removed from the EventEmitter,
+   * including the async iterator for the class
    */
-  off<K extends keyof E>(
+  async off<K extends keyof E>(
     eventName?: K,
     listener?: (...args: E[K]) => void,
-  ): this {
+  ): Promise<this> {
     if (eventName) {
       if (listener) {
         this.#listeners[eventName] = this.#listeners[eventName]?.filter(
           ({ cb }) => cb !== listener,
         );
       } else {
+        if (this.#onWriters[eventName]) {
+          for (const writer of this.#onWriters[eventName]!) {
+            await writer.close();
+          }
+          delete this.#onWriters[eventName];
+        }
+
         delete this.#listeners[eventName];
       }
     } else {
+      for (
+        const writers of Object.values(
+          this.#onWriters,
+        ) as WritableStreamDefaultWriter<E[K]>[][]
+      ) {
+        for (const writer of writers) {
+          await writer.close();
+        }
+      }
+      this.#onWriters = {};
+
+      for (const writer of this.#globalWriters) {
+        await writer.close();
+      }
+
+      this.#globalWriters = [];
       this.#listeners = {};
     }
     return this;
@@ -155,40 +180,6 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
         name: eventName,
         value: args,
       });
-    }
-  }
-
-  /**
-   * Closes async iterators, allowing them to finish and removes listeners.
-   * If no eventName is specified, all iterators will be closed,
-   * including the iterator for the class.
-   */
-  async close<K extends keyof E>(eventName?: K): Promise<void> {
-    this.off(eventName);
-
-    if (eventName) {
-      if (this.#onWriters[eventName]) {
-        for (const writer of this.#onWriters[eventName]!) {
-          await writer.close();
-        }
-        delete this.#onWriters[eventName];
-      }
-    } else {
-      for (
-        const writers of Object.values(
-          this.#onWriters,
-        ) as WritableStreamDefaultWriter<E[K]>[][]
-      ) {
-        for (const writer of writers) {
-          await writer.close();
-        }
-      }
-      this.#onWriters = {};
-
-      for (const writer of this.#globalWriters) {
-        await writer.close();
-      }
-      this.#globalWriters = [];
     }
   }
 
