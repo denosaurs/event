@@ -24,6 +24,31 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   constructor(maxListenersPerEvent?: number) {
     this.#limit = maxListenersPerEvent ?? 10;
   }
+  
+  /** Wait for an Event to fire with given condition. */
+  async waitFor<K extends keyof E>(
+    event: K,
+    checkFunction: (...args: E[K]) => boolean = () => true,
+    timeout?: number
+  ): Promise<E[K] | []> {
+    return await new Promise((resolve) => {
+      let timeoutID: number | undefined
+      if (timeout !== undefined) {
+        timeoutID = setTimeout(() => {
+          this.off(event, eventFunc)
+          resolve([])
+        }, timeout)
+      }
+      const eventFunc = (...args: E[K]): void => {
+        if (checkFunction(...args)) {
+          resolve(args)
+          this.off(event, eventFunc)
+          if (timeoutID !== undefined) clearTimeout(timeoutID)
+        }
+      }
+      this.on(event, eventFunc)
+    })
+  }
 
   /**
    * Appends the listener to the listeners array of the corresponding eventName.
