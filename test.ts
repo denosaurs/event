@@ -171,7 +171,7 @@ Deno.test("closeMixed", async () => {
     }
   })();
 
-  for await (const x of ee) {
+  for await (const _ of ee) {
     await ee.off();
   }
 });
@@ -181,4 +181,18 @@ Deno.test("limitReached", () => {
 
   ee.on("foo", () => {});
   assertThrows(() => ee.on("foo", () => {}));
+});
+
+Deno.test("wait", async () => {
+  const ee = new EventEmitter<Events>();
+
+  ee.on("foo", async () => {
+    console.log("foo");
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }).on("bar", () => {
+    console.log("bar");
+  });
+
+  await ee.wait("foo", "baz");
+  await ee.wait("bar", 0);
 });
