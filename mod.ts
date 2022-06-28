@@ -9,7 +9,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
   #listeners: {
     [K in keyof E]?: Array<{
       once: boolean;
-      cb: (...args: E[K]) => void;
+      cb: (...args: E[K]) => void | Promise<void>;
     }>;
   } = {};
   #globalWriters: WritableStreamDefaultWriter<Entry<E, keyof E>>[] = [];
@@ -180,6 +180,26 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
         name: eventName,
         value: args,
       });
+    }
+  }
+
+  /**
+   * Call and, if async, await the completion of the listeners registered for
+   * the event named eventName, in the order they were registered, passing the
+   * supplied arguments to each. Returns a Promise that resolves on the completion
+   * of the last listener.
+   *
+   * Does not support being awaited the same was as `emit`.
+   */
+  async wait<K extends keyof E>(eventName: K, ...args: E[K]): Promise<void> {
+    const listeners = this.#listeners[eventName]?.slice() ?? [];
+    for (const { cb, once } of listeners) {
+      const ret = cb(...args);
+      if (ret) await ret;
+
+      if (once) {
+        this.off(eventName, cb);
+      }
     }
   }
 
