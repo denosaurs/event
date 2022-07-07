@@ -5,7 +5,7 @@ type Entry<E, K extends keyof E> = {
   value: E[K];
 };
 
-const isNil = (value: unknown): value is null | undefined =>
+const isNullish = (value: unknown): value is null | undefined =>
   value === null || value === undefined;
 
 export class EventEmitter<E extends Record<string, unknown[]>> {
@@ -124,7 +124,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
     eventName?: K,
     listener?: (...args: E[K]) => void,
   ): Promise<this> {
-    if (!isNil(eventName)) {
+    if (!isNullish(eventName)) {
       if (listener) {
         this.#listeners[eventName] = this.#listeners[eventName]?.filter(
           ({ cb }) => cb !== listener,
