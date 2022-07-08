@@ -171,7 +171,7 @@ Deno.test("closeMixed", async () => {
     }
   })();
 
-  for await (const x of ee) {
+  for await (const _x of ee) {
     await ee.off();
   }
 });
