@@ -5,6 +5,9 @@ type Entry<E, K extends keyof E> = {
   value: E[K];
 };
 
+const isNullish = (value: unknown): value is null | undefined =>
+  value === null || value === undefined;
+
 export class EventEmitter<E extends Record<string, unknown[]>> {
   #listeners: {
     [K in keyof E]?: Array<{
@@ -43,7 +46,8 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
         this.#listeners[eventName] = [];
       }
       if (
-        this.#limit !== 0 && this.#listeners[eventName]!.length >= this.#limit
+        this.#limit !== 0 &&
+        this.#listeners[eventName]!.length >= this.#limit
       ) {
         throw new TypeError("Listeners limit reached: limit is " + this.#limit);
       }
@@ -57,7 +61,8 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
         this.#onWriters[eventName] = [];
       }
       if (
-        this.#limit !== 0 && this.#onWriters[eventName]!.length >= this.#limit
+        this.#limit !== 0 &&
+        this.#onWriters[eventName]!.length >= this.#limit
       ) {
         throw new TypeError("Listeners limit reached: limit is " + this.#limit);
       }
@@ -87,7 +92,8 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
       this.#listeners[eventName] = [];
     }
     if (
-      this.#limit !== 0 && this.#listeners[eventName]!.length >= this.#limit
+      this.#limit !== 0 &&
+      this.#listeners[eventName]!.length >= this.#limit
     ) {
       throw new TypeError("Listeners limit reached: limit is " + this.#limit);
     }
@@ -118,7 +124,7 @@ export class EventEmitter<E extends Record<string, unknown[]>> {
     eventName?: K,
     listener?: (...args: E[K]) => void,
   ): Promise<this> {
-    if (eventName) {
+    if (!isNullish(eventName)) {
       if (listener) {
         this.#listeners[eventName] = this.#listeners[eventName]?.filter(
           ({ cb }) => cb !== listener,
