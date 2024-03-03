@@ -1,3 +1,74 @@
+/**
+ * # Event
+ *
+ * Strictly typed event emitter with asynciterator support.
+ *
+ * Events should be defined as a literal object type where the key is the event
+ * name, and the value is a tuple with any amount of elements of any type.
+ *
+ * The constructor takes an optional argument which defines the maximum amount of
+ * listeners per event, which defaults to 10. If this limit is surpassed, an error
+ * is thrown.
+ *
+ * ---
+ *
+ * > ⚠️ Events must be a type, and can't be an interface due to their design
+ * > differences.
+ *
+ * ---
+ *
+ * @example
+ *
+ * ```ts
+ * type Events = {
+ *   foo: [string];
+ *   bar: [number, boolean];
+ * };
+ *
+ * class MyClass extends EventEmitter<Events> {}
+ * const MyClassInstance = new MyClass();
+ *
+ * function listener(num, bool) {}
+ *
+ * // add a listener to the bar event
+ * MyClassInstance.on("bar", listener);
+ *
+ * // remove a listener from the bar event
+ * MyClassInstance.off("bar", listener);
+ *
+ * // remove all listeners from the bar event
+ * MyClassInstance.off("bar");
+ *
+ * // remove all listeners from the event emitter
+ * MyClassInstance.off();
+ *
+ * // add a one-time listener to the bar event
+ * MyClassInstance.once("bar", listener);
+ *
+ * // on, once, and off are chainable
+ * MyClassInstance.on("bar", listener).off("bar", listener);
+ *
+ * // emit the bar event with the wanted data
+ * MyClassInstance.emit("bar", 42, true);
+ *
+ * // listen to all events with an async iterator
+ * for await (const event of MyClassInstance) {
+ *   if (event.name === "bar") {
+ *     // event.value is of type [number, boolean]
+ *   }
+ * }
+ *
+ * // listen to a specific event with an async iterator
+ * for await (const [num, bool] of MyClassInstance.on("bar")) {
+ * }
+ *
+ * // removes all listeners and closes async iterators
+ * MyClassInstance.close("bar");
+ * ```
+ *
+ * @module
+ */
+
 // Copyright 2020-present the denosaurs team. All rights reserved. MIT license.
 
 type Entry<E, K extends keyof E> = {

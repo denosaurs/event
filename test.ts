@@ -1,8 +1,4 @@
-import {
-  assertEquals,
-  assertThrows,
-  fail,
-} from "https://deno.land/std@0.92.0/testing/asserts.ts";
+import { assertEquals, assertThrows, fail } from "jsr:@std/assert@0.218";
 import { EventEmitter } from "./mod.ts";
 
 type Events = {
