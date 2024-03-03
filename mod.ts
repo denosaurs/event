@@ -1,7 +1,7 @@
 /**
  * # Event
  *
- * Strictly typed event emitter with asynciterator support.
+ * Strictly typed event emitter with {@link Symbol.asyncIterator} support.
  *
  * Events should be defined as a literal object type where the key is the event
  * name, and the value is a tuple with any amount of elements of any type.
@@ -79,6 +79,58 @@ type Entry<E, K extends keyof E> = {
 const isNullish = (value: unknown): value is null | undefined =>
   value === null || value === undefined;
 
+/**
+ * Strictly typed event emitter base class with {@link Symbol.asyncIterator} support.
+ * 
+ * @example
+ *
+ * ```ts
+ * type Events = {
+ *   foo: [string];
+ *   bar: [number, boolean];
+ * };
+ *
+ * class MyClass extends EventEmitter<Events> {}
+ * const MyClassInstance = new MyClass();
+ *
+ * function listener(num, bool) {}
+ *
+ * // add a listener to the bar event
+ * MyClassInstance.on("bar", listener);
+ *
+ * // remove a listener from the bar event
+ * MyClassInstance.off("bar", listener);
+ *
+ * // remove all listeners from the bar event
+ * MyClassInstance.off("bar");
+ *
+ * // remove all listeners from the event emitter
+ * MyClassInstance.off();
+ *
+ * // add a one-time listener to the bar event
+ * MyClassInstance.once("bar", listener);
+ *
+ * // on, once, and off are chainable
+ * MyClassInstance.on("bar", listener).off("bar", listener);
+ *
+ * // emit the bar event with the wanted data
+ * MyClassInstance.emit("bar", 42, true);
+ *
+ * // listen to all events with an async iterator
+ * for await (const event of MyClassInstance) {
+ *   if (event.name === "bar") {
+ *     // event.value is of type [number, boolean]
+ *   }
+ * }
+ *
+ * // listen to a specific event with an async iterator
+ * for await (const [num, bool] of MyClassInstance.on("bar")) {
+ * }
+ *
+ * // removes all listeners and closes async iterators
+ * MyClassInstance.close("bar");
+ * ```
+ */
 export class EventEmitter<E extends Record<string, unknown[]>> {
   #listeners: {
     [K in keyof E]?: Array<{
